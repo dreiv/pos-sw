@@ -1,4 +1,5 @@
 import { getDb } from "./client";
+import { reportNetworkResult } from "../sync/connectivity";
 import type { ProductRecord } from "./schema";
 
 // Server is the source of truth when reachable; IndexedDB is the
@@ -10,16 +11,12 @@ export async function getAllProducts(): Promise<ProductRecord[]> {
   return db.getAll("products");
 }
 
-export async function getProductById(
-  id: string
-): Promise<ProductRecord | undefined> {
+export async function getProductById(id: string): Promise<ProductRecord | undefined> {
   const db = await getDb();
   return db.get("products", id);
 }
 
-export async function getProductByBarcode(
-  barcode: string
-): Promise<ProductRecord | undefined> {
+export async function getProductByBarcode(barcode: string): Promise<ProductRecord | undefined> {
   const db = await getDb();
   return db.getFromIndex("products", "by-barcode", barcode);
 }
@@ -38,7 +35,12 @@ export async function getProductByBarcode(
 export async function refreshProductsFromServer(): Promise<boolean> {
   try {
     const res = await fetch(`${API_BASE}/products`);
+    // Reached the server at all — real connectivity signal, reported
+    // before we even check res.ok (a 4xx/5xx here is still proof the
+    // network path works, unlike the catch block below).
+    reportNetworkResult(true);
     if (!res.ok) throw new Error(`Server responded ${res.status}`);
+
     const products = (await res.json()) as ProductRecord[];
 
     const db = await getDb();
@@ -49,6 +51,10 @@ export async function refreshProductsFromServer(): Promise<boolean> {
 
     return true;
   } catch (err) {
+    // Only a genuinely failed fetch (network/DNS/offline) means we're
+    // unreachable — a thrown `Error` from the `!res.ok` branch above
+    // already reported reachability as true, so don't overwrite that.
+    if (err instanceof TypeError) reportNetworkResult(false);
     console.warn("[products] refresh from server failed, using cache:", err);
     return false;
   }

@@ -14,10 +14,8 @@ export const useOutboxStore = defineStore("outbox", {
     async initialize() {
       this.items = await getAllOutbox();
 
-      // Fiecare tab apelează startSyncEngine — e ok acum, pentru că
-      // leadership-ul e controlat de Navigator Locks în interior, nu de
-      // noi aici. Un tab non-lider stă doar la coadă pe lock; nu rulează
-      // niciun ciclu de sync până nu devine lider.
+      // Every tab calls startSyncEngine — that's fine now, because
+      // leadership is gated by Navigator Locks inside it, not by us.
       if (!this.stopEngine) {
         this.stopEngine = startSyncEngine();
       }
@@ -34,17 +32,18 @@ export const useOutboxStore = defineStore("outbox", {
     },
     async checkout(cartItems: CartItemRecord[], total: number): Promise<string> {
       const id = crypto.randomUUID();
+      // Written to IndexedDB before any network call — the customer's
+      // transaction is durable the instant they confirm, online or not.
       await enqueueCheckout(id, cartItems, total);
       this.items = await getAllOutbox();
       notifyStateChanged({ type: "outbox-changed" });
 
-      // Încercăm imediat, ca un checkout online să nu aștepte până la
-      // următorul tick. Asta ocolește intenționat lock-ul de leadership —
-      // dacă tabul curent nu e liderul, tot trimite direct. E sigur
-      // pentru că trySend e idempotent (id-ul e cheia de idempotență):
-      // în cel mai rău caz, liderul mai încearcă și el același record la
-      // următorul tick, iar serverul recunoaște că l-a mai procesat și
-      // răspunde cu 200 fără să dubleze tranzacția.
+      // Try immediately so a checkout while online doesn't just sit
+      // there until the next interval tick. This bypasses the
+      // leadership lock on purpose — safe because trySend is
+      // idempotent, so even if the leader tab's own loop also picks
+      // this record up on its next tick, the server just replays the
+      // same recorded result instead of double-charging.
       await runSyncCycle();
       this.items = await getAllOutbox();
       return id;

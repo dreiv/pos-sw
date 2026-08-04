@@ -20,15 +20,13 @@ export const useCartStore = defineStore("cart", {
       this.items = await getCart();
       this.loading = false;
 
-      // Ne abonăm o singură dată per instanță de store — initialize()
-      // rulează la fiecare mount de view, dar vrem un singur listener
-      // care re-citește la broadcast, nu unul per view vizitat.
+      // Subscribe once per store instance — initialize() runs on every
+      // view mount (ScanView, CartView, CheckoutView all call it), but
+      // we only want one listener re-reading on broadcast, not one per
+      // view visited.
       if (!this.unsubscribeBroadcast) {
         this.unsubscribeBroadcast = onStateChanged((message) => {
           if (message.type === "cart-changed") {
-            // Alt tab a schimbat coșul. IndexedDB e deja sursa de
-            // adevăr (s-a scris acolo înainte de broadcast) — noi doar
-            // aliniem copia din memorie a acestui tab.
             getCart().then((items) => {
               this.items = items;
             });
