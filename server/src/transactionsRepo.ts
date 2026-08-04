@@ -1,6 +1,6 @@
-import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { createJsonStore } from "./jsonStore.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_FILE = path.join(__dirname, "..", "transactions.json");
@@ -19,14 +19,7 @@ export interface Transaction {
   receivedAt: string;
 }
 
-async function readAll(): Promise<Transaction[]> {
-  const raw = await readFile(DATA_FILE, "utf-8");
-  return JSON.parse(raw) as Transaction[];
-}
-
-async function writeAll(transactions: Transaction[]): Promise<void> {
-  await writeFile(DATA_FILE, JSON.stringify(transactions, null, 2), "utf-8");
-}
+const { readAll, writeAll } = createJsonStore<Transaction>(DATA_FILE);
 
 export async function findById(id: string): Promise<Transaction | undefined> {
   const all = await readAll();

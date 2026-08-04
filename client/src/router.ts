@@ -3,6 +3,10 @@ import ScanView from "@/views/ScanView.vue";
 import CartView from "@/views/CartView.vue";
 import CheckoutView from "@/views/CheckoutView.vue";
 import AdminProductsView from "@/views/AdminProductsView.vue";
+import { useCartStore } from "@/stores/cart";
+import { useProductsStore } from "@/stores/products";
+import { useOutboxStore } from "@/stores/outbox";
+import { useConnectivityStore } from "@/stores/connectivity";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -17,6 +21,25 @@ const router = createRouter({
       component: AdminProductsView,
     },
   ],
+});
+
+let storesInitialized = false;
+
+// Run initial store hydrations (IndexedDB loads, network listener bindings)
+// once on app bootstrap rather than re-triggering on every route transition.
+router.beforeEach(async () => {
+  if (storesInitialized) return true;
+  storesInitialized = true;
+
+  const cartStore = useCartStore();
+  const productsStore = useProductsStore();
+  const outboxStore = useOutboxStore();
+  const connectivityStore = useConnectivityStore();
+
+  await Promise.all([cartStore.initialize(), productsStore.initialize(), outboxStore.initialize()]);
+  connectivityStore.initialize();
+
+  return true;
 });
 
 export default router;

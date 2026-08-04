@@ -1,31 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import { useCartStore } from "@/stores/cart";
-import { useProductsStore } from "@/stores/products";
 import { useOutboxStore } from "@/stores/outbox";
 import { formatPrice } from "@/utils/format";
 
 const cartStore = useCartStore();
-const productsStore = useProductsStore();
 const outboxStore = useOutboxStore();
 
 const lastCheckoutId = ref<string | null>(null);
-
-onMounted(() => {
-  cartStore.initialize();
-  productsStore.initialize();
-  outboxStore.initialize();
-});
-
-const priceConflicts = computed(() => {
-  return cartStore.items
-    .map((item) => {
-      const current = productsStore.products.find((p) => p.id === item.productId);
-      if (!current || current.price === item.priceAtAdd) return null;
-      return { name: item.name, oldPrice: item.priceAtAdd, newPrice: current.price };
-    })
-    .filter((c): c is { name: string; oldPrice: number; newPrice: number } => c !== null);
-});
 
 const lastCheckoutRecord = computed(() =>
   outboxStore.items.find((o) => o.id === lastCheckoutId.value)
@@ -52,10 +34,10 @@ async function confirmCheckout() {
         </ul>
         <p><strong>Total: {{ formatPrice(cartStore.total) }}</strong></p>
 
-        <div v-if="priceConflicts.length > 0" class="notice">
+        <div v-if="cartStore.priceConflicts.length > 0" class="notice">
           ⚠️ Prețul s-a schimbat pentru unele produse de când le-ai adăugat în coș:
           <ul>
-            <li v-for="c in priceConflicts" :key="c.name">
+            <li v-for="c in cartStore.priceConflicts" :key="c.name">
               {{ c.name }}: {{ formatPrice(c.oldPrice) }} → {{ formatPrice(c.newPrice) }}
             </li>
           </ul>

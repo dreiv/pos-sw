@@ -1,3 +1,6 @@
+import { useBroadcastChannel } from "@vueuse/core";
+import { watch } from "vue";
+
 export type PosBroadcastMessage =
   | { type: "cart-changed" }
   | { type: "outbox-changed" }
@@ -5,12 +8,9 @@ export type PosBroadcastMessage =
 
 const CHANNEL_NAME = "pos-state";
 
-let channel: BroadcastChannel | undefined;
-
-function getChannel(): BroadcastChannel {
-  if (!channel) channel = new BroadcastChannel(CHANNEL_NAME);
-  return channel;
-}
+const { post, data } = useBroadcastChannel<PosBroadcastMessage, PosBroadcastMessage>({
+  name: CHANNEL_NAME,
+});
 
 /**
  * Tell other tabs: "something changed, re-read it from IndexedDB /
@@ -23,12 +23,11 @@ function getChannel(): BroadcastChannel {
  * there's no need to filter yourself out.
  */
 export function notifyStateChanged(message: PosBroadcastMessage): void {
-  getChannel().postMessage(message);
+  post(message);
 }
 
 export function onStateChanged(handler: (message: PosBroadcastMessage) => void): () => void {
-  const ch = getChannel();
-  const listener = (event: MessageEvent<PosBroadcastMessage>) => handler(event.data);
-  ch.addEventListener("message", listener);
-  return () => ch.removeEventListener("message", listener);
+  return watch(data, (message) => {
+    if (message) handler(message);
+  });
 }

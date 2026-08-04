@@ -1,13 +1,8 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
 import { useCartStore } from "@/stores/cart";
 import { formatPrice } from "@/utils/format";
 
 const cartStore = useCartStore();
-
-onMounted(() => {
-  cartStore.initialize();
-});
 </script>
 
 <template>
@@ -17,17 +12,12 @@ onMounted(() => {
     <ul v-else>
       <li v-for="item in cartStore.items" :key="item.productId">
         {{ item.name }} — {{ formatPrice(item.priceAtAdd) }} ×
-        <input
-          type="number"
-          min="0"
-          :value="item.quantity"
-          @change="
-            cartStore.updateQuantity(
-              item.productId,
-              Number(($event.target as HTMLInputElement).value)
-            )
-          "
-        />
+        <input type="number" min="0" :value="item.quantity" @change="
+          cartStore.updateQuantity(
+            item.productId,
+            Number(($event.target as HTMLInputElement).value)
+          )
+          " />
         <button type="button" @click="cartStore.remove(item.productId)">
           Elimină
         </button>

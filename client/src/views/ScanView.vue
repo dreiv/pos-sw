@@ -1,16 +1,10 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
 import { useProductsStore } from "@/stores/products";
 import { useCartStore } from "@/stores/cart";
 import { formatPrice } from "@/utils/format";
 
 const productsStore = useProductsStore();
 const cartStore = useCartStore();
-
-onMounted(() => {
-  productsStore.initialize();
-  cartStore.initialize();
-});
 </script>
 
 <template>

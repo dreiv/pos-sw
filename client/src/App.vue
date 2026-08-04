@@ -1,18 +1,10 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
-import { useOutboxStore } from "@/stores/outbox";
 import { useConnectivityStore } from "@/stores/connectivity";
 import { useRegisterSW } from "virtual:pwa-register/vue";
 
-const outboxStore = useOutboxStore();
 const connectivityStore = useConnectivityStore();
 
 const { needRefresh, updateServiceWorker } = useRegisterSW();
-
-onMounted(() => {
-  outboxStore.initialize();
-  connectivityStore.initialize();
-});
 </script>
 
 <template>

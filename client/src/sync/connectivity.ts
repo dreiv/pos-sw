@@ -1,3 +1,5 @@
+import { useNetwork } from "@vueuse/core";
+import { watch } from "vue";
 import { notifyStateChanged, onStateChanged } from "./broadcastChannel";
 import { HEALTH_URL } from "../config";
 
@@ -71,8 +73,8 @@ function broadcastConnectivity(): void {
   notifyStateChanged({ type: "connectivity-changed", isOnline, isSyncing });
 }
 
-window.addEventListener("online", () => setOnline(true));
-window.addEventListener("offline", () => setOnline(false));
+const { isOnline: browserIsOnline } = useNetwork();
+watch(browserIsOnline, (value) => setOnline(!!value));
 
 onStateChanged((message) => {
   if (message.type === "connectivity-changed") {
