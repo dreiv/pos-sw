@@ -1,0 +1,77 @@
+[
+  {
+    "id": "7f5089ec-a27e-495e-8c44-67709bcba18f",
+    "items": [
+      {
+        "productId": "p002",
+        "name": "Paine alba",
+        "priceAtAdd": 4.8,
+        "quantity": 2
+      },
+      {
+        "productId": "p003",
+        "name": "Oua 10buc",
+        "priceAtAdd": 10.82,
+        "quantity": 1
+      },
+      {
+        "productId": "p004",
+        "name": "Unt 200g",
+        "priceAtAdd": 5.04,
+        "quantity": 1
+      }
+    ],
+    "total": 25.46,
+    "receivedAt": "2026-08-04T15:23:53.889Z"
+  },
+  {
+    "id": "fbd613ef-dc2d-4440-bf30-7719aa4823df",
+    "items": [
+      {
+        "productId": "p001",
+        "name": "Lapte 1L",
+        "priceAtAdd": 1.65,
+        "quantity": 1
+      },
+      {
+        "productId": "p002",
+        "name": "Paine alba",
+        "priceAtAdd": 4.8,
+        "quantity": 3
+      },
+      {
+        "productId": "p004",
+        "name": "Unt 200g",
+        "priceAtAdd": 5.04,
+        "quantity": 1
+      }
+    ],
+    "total": 21.089999999999996,
+    "receivedAt": "2026-08-04T15:23:58.669Z"
+  },
+  {
+    "id": "6ad8741f-986b-4bab-a8ee-760f9f12e287",
+    "items": [
+      {
+        "productId": "p002",
+        "name": "Paine alba",
+        "priceAtAdd": 4.8,
+        "quantity": 1
+      },
+      {
+        "productId": "p003",
+        "name": "Oua 10buc",
+        "priceAtAdd": 10.82,
+        "quantity": 1
+      },
+      {
+        "productId": "p004",
+        "name": "Unt 200g",
+        "priceAtAdd": 5.04,
+        "quantity": 1
+      }
+    ],
+    "total": 20.66,
+    "receivedAt": "2026-08-04T15:26:25.289Z"
+  }
+]

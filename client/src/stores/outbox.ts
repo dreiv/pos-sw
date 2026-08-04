@@ -1,3 +1,4 @@
+import { toRaw } from "vue";
 import { defineStore } from "pinia";
 import { getAllOutbox, enqueueCheckout } from "../db/outboxRepo";
 import { runSyncCycle, startSyncEngine } from "../sync/syncEngine";
@@ -30,14 +31,15 @@ export const useOutboxStore = defineStore("outbox", {
     },
     async checkout(cartItems: CartItemRecord[], total: number): Promise<string> {
       const id = crypto.randomUUID();
-      // Durable before any network call.
-      await enqueueCheckout(id, cartItems, total);
+      await enqueueCheckout(id, toRaw(cartItems).map(toRaw), total);
       this.items = await getAllOutbox();
       notifyStateChanged({ type: "outbox-changed" });
 
       // BroadcastChannel excludes the sending tab; re-fetch locally to reflect
       // status updates (e.g. pending -> synced) immediately.
       await runSyncCycle();
+      this.items = await getAllOutbox();
+
       return id;
     },
   },

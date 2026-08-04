@@ -8,7 +8,7 @@ const { needRefresh, updateServiceWorker } = useRegisterSW();
 </script>
 
 <template>
-  <div class="connectivity-badge" :class="connectivityStore.status">
+  <div class="connectivity-bar" :class="connectivityStore.status">
     {{ connectivityStore.status }}
   </div>
 
@@ -21,29 +21,29 @@ const { needRefresh, updateServiceWorker } = useRegisterSW();
 </template>
 
 <style scoped>
-.connectivity-badge {
-  position: fixed;
-  top: 8px;
-  right: 8px;
+.connectivity-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
   padding: 4px 10px;
-  border-radius: var(--radius-pill);
+  text-align: center;
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
-  z-index: 1000;
 }
 
-.connectivity-badge.online {
+.connectivity-bar.online {
   background: var(--color-success-bg);
   color: var(--color-success-text);
 }
 
-.connectivity-badge.offline {
+.connectivity-bar.offline {
   background: var(--color-danger-bg);
   color: var(--color-danger-text);
 }
 
-.connectivity-badge.syncing {
+.connectivity-bar.syncing {
   background: var(--color-warning-bg);
   color: var(--color-warning-text);
 }
