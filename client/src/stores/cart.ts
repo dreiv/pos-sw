@@ -53,16 +53,21 @@ export const useCartStore = defineStore("cart", {
       await addToCart(product, quantity);
       this.items = await getCart();
       notifyStateChanged({ type: "cart-changed" });
+      useProductsStore().adjustLocalStock(product.id, quantity);
     },
     async updateQuantity(productId: string, quantity: number) {
+      const previousQuantity = this.items.find((i) => i.productId === productId)?.quantity ?? 0;
       await updateCartQuantity(productId, quantity);
       this.items = await getCart();
       notifyStateChanged({ type: "cart-changed" });
+      useProductsStore().adjustLocalStock(productId, quantity - previousQuantity);
     },
     async remove(productId: string) {
+      const existing = this.items.find((i) => i.productId === productId);
       await removeFromCart(productId);
       this.items = await getCart();
       notifyStateChanged({ type: "cart-changed" });
+      if (existing) useProductsStore().adjustLocalStock(productId, -existing.quantity);
     },
     async clear() {
       await clearCart();

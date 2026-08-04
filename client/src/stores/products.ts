@@ -31,5 +31,12 @@ export const useProductsStore = defineStore("products", {
     markDirty() {
       this.isDirty = true;
     },
+
+    // In-memory only, not persisted to IndexedDB — a display-side
+    adjustLocalStock(productId: string, delta: number) {
+      const product = this.products.find((p) => p.id === productId);
+      if (!product) return;
+      product.stock = Math.max(0, product.stock - delta);
+    },
   },
 });
