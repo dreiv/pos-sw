@@ -1,13 +1,10 @@
 import { getPendingOutbox, markSynced, scheduleRetry } from "../db/outboxRepo";
+import { notifyStateChanged } from "./broadcastChannel";
 import type { OutboxRecord } from "../db/schema";
 
 const API_BASE = "http://localhost:3000";
+const SYNC_LOCK_NAME = "pos-sync-leader";
 
-/**
- * Send one outbox record. Idempotent by construction: `id` is sent as
- * the request body's idempotency key, so a retry of an already-synced
- * transaction is a safe no-op on the server, not a double charge.
- */
 async function trySend(record: OutboxRecord): Promise<void> {
   try {
     const res = await fetch(`${API_BASE}/transactions`, {
@@ -19,52 +16,64 @@ async function trySend(record: OutboxRecord): Promise<void> {
         total: record.total,
       }),
     });
-
-    // 2xx (including the idempotent-replay 200) means the server has
-    // this transaction durably recorded — safe to mark synced.
     if (res.ok) {
       await markSynced(record.id);
       return;
     }
-
-    // Anything else (including our simulated 503) is treated the same
-    // as a network failure: back off and retry later.
     await scheduleRetry(record.id);
   } catch {
-    // fetch() itself threw — offline, DNS failure, server down, etc.
-    // Same handling: this is exactly the case the outbox exists for.
     await scheduleRetry(record.id);
   }
 }
 
-/**
- * One pass over the outbox: send every pending item whose backoff
- * window has elapsed. Sequential on purpose — this is a practice
- * project with a handful of items, not a high-throughput queue, and
- * sequential sends are much easier to reason about (and to explain).
- */
 export async function runSyncCycle(): Promise<void> {
   const pending = await getPendingOutbox();
   const due = pending.filter((r) => r.nextRetryAt <= Date.now());
+  if (due.length === 0) return;
+
   for (const record of due) {
     await trySend(record);
   }
+
+  // Statusurile s-au schimbat (synced sau backoff nou) — anunță
+  // celelalte tab-uri să re-citească outbox-ul din IndexedDB, nu
+  // trimitem stare prin mesaj.
+  notifyStateChanged({ type: "outbox-changed" });
 }
 
-let intervalHandle: ReturnType<typeof setInterval> | undefined;
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 /**
- * Start the background sync loop. NOTE: this does not yet do leader
- * election (Navigator Locks) — if the app is open in multiple tabs,
- * each tab currently runs its own loop independently. That's the next
- * step; for now every tab syncing is harmless (idempotent), just
- * wasteful.
+ * Leader election via Navigator Locks. `navigator.locks.request()` pune
+ * fiecare tab la coadă pentru lock-ul numit SYNC_LOCK_NAME și ține
+ * lock-ul cât timp rulează callback-ul async dat. Deci în loc de
+ * "alege un lider, apoi fiecare tab verifică 'sunt eu liderul?' înainte
+ * să sincronizeze", gating-ul vine aproape gratis: bucla while de mai
+ * jos rulează DOAR în tab-ul care ține lock-ul chiar acum. Un tab
+ * non-lider care apelează startSyncEngine() stă pur și simplu blocat
+ * pe acel request — nu apelează niciodată runSyncCycle — până când
+ * liderul actual se închide (browserul eliberează automat lock-ul) sau
+ * până când propriul lui cancel() e apelat.
  */
 export function startSyncEngine(intervalMs = 3000): () => void {
-  if (intervalHandle) return () => {};
-  intervalHandle = setInterval(runSyncCycle, intervalMs);
+  let cancelled = false;
+
+  (async () => {
+    while (!cancelled) {
+      await navigator.locks.request(SYNC_LOCK_NAME, async () => {
+        while (!cancelled) {
+          await runSyncCycle();
+          await sleep(intervalMs);
+        }
+      });
+      // callback-ul a returnat (adică am ieșit din while pentru că am
+      // fost cancelled) => bucla exterioară se oprește și ea.
+    }
+  })();
+
   return () => {
-    if (intervalHandle) clearInterval(intervalHandle);
-    intervalHandle = undefined;
+    cancelled = true;
   };
 }
