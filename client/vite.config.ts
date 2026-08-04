@@ -31,6 +31,8 @@ export default defineConfig({
         short_name: "POS",
         start_url: "/",
         display: "standalone",
+        theme_color: "#2563eb",
+        background_color: "#ffffff",
       },
     }),
   ],

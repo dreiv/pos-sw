@@ -3,7 +3,7 @@ import type { DBSchema } from "idb";
 export const DB_NAME = "pos-db";
 // Bump this whenever the store shape changes — idb's upgrade callback
 // runs migrations keyed off this number.
-export const DB_VERSION = 3;
+export const DB_VERSION = 1;
 
 export interface ProductRecord {
   id: string;

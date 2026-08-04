@@ -8,20 +8,14 @@ let dbPromise: Promise<IDBPDatabase<PosDBSchema>> | undefined;
 export function getDb(): Promise<IDBPDatabase<PosDBSchema>> {
   if (!dbPromise) {
     dbPromise = openDB<PosDBSchema>(DB_NAME, DB_VERSION, {
-      upgrade(db, oldVersion) {
-        if (oldVersion < 1) {
-          const store = db.createObjectStore("products", { keyPath: "id" });
-          store.createIndex("by-barcode", "barcode", { unique: false });
-        }
-        if (oldVersion < 2) {
-          db.createObjectStore("cart", { keyPath: "productId" });
-        }
-        if (oldVersion < 3) {
-          const outbox = db.createObjectStore("outbox", { keyPath: "id" });
-          outbox.createIndex("by-status", "status", { unique: false });
-        }
-        // Future migrations: `if (oldVersion < 4) { ... }` — additive,
-        // never destructive, so users mid-transaction don't lose data.
+      upgrade(db) {
+        const products = db.createObjectStore("products", { keyPath: "id" });
+        products.createIndex("by-barcode", "barcode", { unique: false });
+
+        db.createObjectStore("cart", { keyPath: "productId" });
+
+        const outbox = db.createObjectStore("outbox", { keyPath: "id" });
+        outbox.createIndex("by-status", "status", { unique: false });
       },
       // Fires on THIS connection when a newer version (e.g. another
       // tab after a code change bumped DB_VERSION) wants to open and
@@ -29,7 +23,7 @@ export function getDb(): Promise<IDBPDatabase<PosDBSchema>> {
       // other tab's upgrade would hang — which is exactly the bug that
       // was happening here.
       blocking() {
-        db.close();
+        dbPromise?.then((db) => db.close());
         dbPromise = undefined;
       },
       // Fires on the NEW connection if some other (stale) connection
