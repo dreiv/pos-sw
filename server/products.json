@@ -1,0 +1,142 @@
+[
+  {
+    "id": "p001",
+    "name": "Lapte 1L",
+    "price": 1.65,
+    "barcode": "594292023566",
+    "stock": 49
+  },
+  {
+    "id": "p002",
+    "name": "Paine alba",
+    "price": 4.8,
+    "barcode": "593243812966",
+    "stock": 53
+  },
+  {
+    "id": "p003",
+    "name": "Oua 10buc",
+    "price": 10.82,
+    "barcode": "595297202140",
+    "stock": 69
+  },
+  {
+    "id": "p004",
+    "name": "Unt 200g",
+    "price": 5.04,
+    "barcode": "596483453986",
+    "stock": 68
+  },
+  {
+    "id": "p005",
+    "name": "Iaurt Grecesc",
+    "price": 17.41,
+    "barcode": "597514516856",
+    "stock": 58
+  },
+  {
+    "id": "p006",
+    "name": "Cafea Boabe 500g",
+    "price": 16.44,
+    "barcode": "595723023444",
+    "stock": 9
+  },
+  {
+    "id": "p007",
+    "name": "Ceai Verde 20pl",
+    "price": 15.6,
+    "barcode": "592012233261",
+    "stock": 27
+  },
+  {
+    "id": "p008",
+    "name": "Suc Portocale 1L",
+    "price": 12.51,
+    "barcode": "591201809917",
+    "stock": 5
+  },
+  {
+    "id": "p009",
+    "name": "Apa Minerala 1.5L",
+    "price": 23.38,
+    "barcode": "599029499540",
+    "stock": 77
+  },
+  {
+    "id": "p010",
+    "name": "Ciocolata Neagra",
+    "price": 11.63,
+    "barcode": "599281334236",
+    "stock": 91
+  },
+  {
+    "id": "p011",
+    "name": "Biscuiti Digestivi",
+    "price": 24.73,
+    "barcode": "593765272868",
+    "stock": 11
+  },
+  {
+    "id": "p012",
+    "name": "Paste Fainoase 500g",
+    "price": 17.07,
+    "barcode": "591462811600",
+    "stock": 91
+  },
+  {
+    "id": "p013",
+    "name": "Orez Basmati 1kg",
+    "price": 13.12,
+    "barcode": "597387850403",
+    "stock": 33
+  },
+  {
+    "id": "p014",
+    "name": "Ulei Floarea Soarelui 1L",
+    "price": 21.48,
+    "barcode": "591538942937",
+    "stock": 44
+  },
+  {
+    "id": "p015",
+    "name": "Zahar 1kg",
+    "price": 13.22,
+    "barcode": "591197974155",
+    "stock": 32
+  },
+  {
+    "id": "p016",
+    "name": "Sare 1kg",
+    "price": 10.53,
+    "barcode": "598620938523",
+    "stock": 92
+  },
+  {
+    "id": "p017",
+    "name": "Detergent Vase",
+    "price": 23.67,
+    "barcode": "599497943538",
+    "stock": 57
+  },
+  {
+    "id": "p018",
+    "name": "Hartie Igienica 8role",
+    "price": 12.79,
+    "barcode": "596283178632",
+    "stock": 71
+  },
+  {
+    "id": "p019",
+    "name": "Sampon 400ml",
+    "price": 23.45,
+    "barcode": "599799824219",
+    "stock": 29
+  },
+  {
+    "id": "p020",
+    "name": "Pasta de Dinti",
+    "price": 11.99,
+    "barcode": "598552376186",
+    "stock": 75
+  }
+]
