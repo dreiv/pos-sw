@@ -11,8 +11,8 @@
     "skipLibCheck": true,
 
     /* Output Layout */
-    "outDir": "./dist",
-    "rootDir": "./src",
+    "outDir": "${configDir}/dist",
+    "rootDir": "${configDir}/src",
     "sourceMap": true,
     "removeComments": true,
 
