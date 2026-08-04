@@ -1,10 +1,10 @@
 import { getDb } from "./client";
 import { reportNetworkResult } from "../sync/connectivity";
+import { API_BASE } from "../config";
 import type { ProductRecord } from "./schema";
 
 // Server is the source of truth when reachable; IndexedDB is the
-// offline cache. Point this at the pos-server we built earlier.
-const API_BASE = "http://localhost:3000";
+// offline cache. Points at the pos-server built alongside this app.
 
 export async function getAllProducts(): Promise<ProductRecord[]> {
   const db = await getDb();

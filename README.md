@@ -15,10 +15,13 @@ The fake backend (with a simulated 30% failure rate) runs separately, from `../s
 
 ```
 src/
+  config.ts — single source of truth for the API base URL
   db/       — IndexedDB (idb): products (cache), cart, outbox
   stores/   — Pinia: cart, products, outbox, connectivity
+  styles/   — global CSS: design tokens + dark mode (prefers-color-scheme)
   sync/     — outbox → server: sync engine, leader election, broadcast, connectivity
   sw/       — service worker (Workbox, injectManifest)
+  utils/    — shared helpers (e.g. price formatting)
   views/    — ScanView, CartView, CheckoutView, AdminProductsView
 ```
 

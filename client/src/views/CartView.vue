@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
 import { useCartStore } from "@/stores/cart";
+import { formatPrice } from "@/utils/format";
 
 const cartStore = useCartStore();
 
@@ -15,7 +16,7 @@ onMounted(() => {
     <p v-if="cartStore.items.length === 0">Coșul e gol.</p>
     <ul v-else>
       <li v-for="item in cartStore.items" :key="item.productId">
-        {{ item.name }} — {{ item.priceAtAdd.toFixed(2) }} lei ×
+        {{ item.name }} — {{ formatPrice(item.priceAtAdd) }} ×
         <input
           type="number"
           min="0"
@@ -32,7 +33,7 @@ onMounted(() => {
         </button>
       </li>
     </ul>
-    <p><strong>Total: {{ cartStore.total.toFixed(2) }} lei</strong></p>
+    <p><strong>Total: {{ formatPrice(cartStore.total) }}</strong></p>
     <RouterLink to="/scan">Înapoi la catalog</RouterLink>
     <RouterLink to="/checkout">Continuă către checkout</RouterLink>
   </main>

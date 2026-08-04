@@ -10,11 +10,11 @@ import { useRegisterSW } from "virtual:pwa-register/vue";
 const outboxStore = useOutboxStore();
 const connectivityStore = useConnectivityStore();
 
-// registerType: "prompt" (vite.config.ts) înseamnă că o versiune nouă
-// de SW stă în "waiting" în loc să preia automat controlul — noi
-// decidem exact când se activează, apelând updateServiceWorker() mai
-// jos, ca să nu schimbăm app shell-ul de sub picioarele unei
-// tranzacții în curs.
+// registerType: "prompt" (see vite.config.ts) means a new SW version
+// sits in "waiting" instead of taking control automatically — we
+// decide exactly when it activates, by calling updateServiceWorker()
+// below, so we don't swap the app shell out from under an
+// in-progress transaction.
 const { needRefresh, updateServiceWorker } = useRegisterSW();
 
 onMounted(() => {
@@ -42,7 +42,7 @@ onMounted(() => {
   top: 8px;
   right: 8px;
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
@@ -50,18 +50,18 @@ onMounted(() => {
 }
 
 .connectivity-badge.online {
-  background: #d1fae5;
-  color: #065f46;
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
 }
 
 .connectivity-badge.offline {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
 }
 
 .connectivity-badge.syncing {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
 }
 
 .update-banner {
@@ -69,10 +69,10 @@ onMounted(() => {
   bottom: 8px;
   left: 50%;
   transform: translateX(-50%);
-  background: #1f2937;
-  color: white;
+  background: var(--color-overlay-bg);
+  color: var(--color-overlay-text);
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 14px;
   z-index: 1000;
   display: flex;

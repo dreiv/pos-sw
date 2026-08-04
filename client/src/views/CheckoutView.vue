@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from "vue";
 import { useCartStore } from "@/stores/cart";
 import { useProductsStore } from "@/stores/products";
 import { useOutboxStore } from "@/stores/outbox";
+import { formatPrice } from "@/utils/format";
 
 const cartStore = useCartStore();
 const productsStore = useProductsStore();
@@ -50,16 +51,16 @@ async function confirmCheckout() {
       <template v-else>
         <ul>
           <li v-for="item in cartStore.items" :key="item.productId">
-            {{ item.name }} × {{ item.quantity }} — {{ item.priceAtAdd.toFixed(2) }} lei
+            {{ item.name }} × {{ item.quantity }} — {{ formatPrice(item.priceAtAdd) }}
           </li>
         </ul>
-        <p><strong>Total: {{ cartStore.total.toFixed(2) }} lei</strong></p>
+        <p><strong>Total: {{ formatPrice(cartStore.total) }}</strong></p>
 
         <div v-if="priceConflicts.length > 0" class="notice">
           ⚠️ Prețul s-a schimbat pentru unele produse de când le-ai adăugat în coș:
           <ul>
             <li v-for="c in priceConflicts" :key="c.name">
-              {{ c.name }}: {{ c.oldPrice.toFixed(2) }} lei → {{ c.newPrice.toFixed(2) }} lei
+              {{ c.name }}: {{ formatPrice(c.oldPrice) }} → {{ formatPrice(c.newPrice) }}
             </li>
           </ul>
           Totalul de mai sus folosește prețul din momentul adăugării în coș.
@@ -82,3 +83,13 @@ async function confirmCheckout() {
     <RouterLink to="/cart">Înapoi la coș</RouterLink>
   </main>
 </template>
+
+<style scoped>
+.notice {
+  margin: var(--space-md) 0;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+</style>

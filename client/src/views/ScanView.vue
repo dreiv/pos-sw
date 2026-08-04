@@ -2,6 +2,7 @@
 import { onMounted } from "vue";
 import { useProductsStore } from "@/stores/products";
 import { useCartStore } from "@/stores/cart";
+import { formatPrice } from "@/utils/format";
 
 const productsStore = useProductsStore();
 const cartStore = useCartStore();
@@ -21,7 +22,7 @@ onMounted(() => {
     </p>
     <ul>
       <li v-for="p in productsStore.products" :key="p.id">
-        {{ p.name }} — {{ p.price.toFixed(2) }} lei ({{ p.stock }} în stoc)
+        {{ p.name }} — {{ formatPrice(p.price) }} ({{ p.stock }} în stoc)
         <button type="button" @click="cartStore.add(p)">Adaugă în coș</button>
       </li>
     </ul>

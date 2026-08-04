@@ -5,8 +5,9 @@ export type PosBroadcastMessage =
 
 const CHANNEL_NAME = "pos-state";
 
-// Creat lazy — BroadcastChannel poate lipsi din unele medii de test/SSR,
-// și fișierul e importat atât de store-uri cât și de sync engine.
+// Created lazily — BroadcastChannel can be missing in some test/SSR
+// environments, and this file is imported by both the stores and the
+// sync engine.
 let channel: BroadcastChannel | undefined;
 
 function getChannel(): BroadcastChannel {
@@ -15,13 +16,14 @@ function getChannel(): BroadcastChannel {
 }
 
 /**
- * Anunță celelalte tab-uri: "ceva s-a schimbat, re-citește din
- * IndexedDB / re-verifică starea". NU trimitem datele efective — dacă
- * ai trimite cart-ul/outbox-ul prin mesaj, ai avea două surse de adevăr
- * care pot diverge (mesaj pierdut, ordine greșită, tab care era pe altă
- * pagină). IndexedDB rămâne singura sursă de adevăr; broadcast-ul e
- * doar o sonerie. Notă: BroadcastChannel NU livrează mesajul propriu
- * tab-ului care l-a trimis (per spec), deci nu ai nevoie să te filtrezi.
+ * Tell other tabs: "something changed, re-read it from IndexedDB /
+ * re-check your state." We don't send the actual data — sending the
+ * cart/outbox contents in the message would create two sources of
+ * truth that can diverge (a dropped message, wrong ordering, a tab
+ * that was on a different page). IndexedDB stays the single source of
+ * truth; the broadcast is just a doorbell. Note: BroadcastChannel does
+ * NOT deliver a message back to the tab that sent it (per spec), so
+ * there's no need to filter yourself out.
  */
 export function notifyStateChanged(message: PosBroadcastMessage): void {
   getChannel().postMessage(message);

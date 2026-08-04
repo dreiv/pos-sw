@@ -61,4 +61,3 @@ export async function remove(id: string): Promise<boolean> {
   await writeAll(products);
   return true;
 }
-

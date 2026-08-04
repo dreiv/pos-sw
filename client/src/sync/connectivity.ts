@@ -1,16 +1,16 @@
 import { notifyStateChanged, onStateChanged } from "./broadcastChannel";
+import { HEALTH_URL } from "../config";
 
 export type ConnectivityStatus = "online" | "offline" | "syncing";
 
-const HEALTH_URL = "http://localhost:3000/health";
 const PROBE_BASE_MS = 5_000;
 const PROBE_MAX_MS = 30_000;
 
 let isOnline = navigator.onLine;
 let isSyncing = false;
-// Setat de syncEngine când tab-ul câștigă (sau pierde) lock-ul de
-// leadership. Doar liderul face proba de recuperare și doar liderul
-// difuzează starea către celelalte tab-uri — non-liderii doar ascultă.
+// Set by syncEngine when the tab wins (or loses) the leadership lock.
+// Only the leader runs the recovery probe, and only the leader
+// broadcasts state to the other tabs — non-leaders just listen.
 let isLeaderTab = false;
 
 type Listener = (status: ConnectivityStatus) => void;
@@ -50,12 +50,12 @@ export function setSyncing(value: boolean): void {
 }
 
 /**
- * Semnal pasiv de conectivitate: orice request real către server
- * (refresh produse, încercare de sync din outbox) raportează aici
- * rezultatul. Nu facem NICIUN request doar ca să aflăm starea — asta
- * e diferența față de un heartbeat clasic. La mii de clienți, în
- * regim normal (online), costul e zero: reciclăm trafic care oricum
- * există.
+ * Passive connectivity signal: any real request to the server
+ * (product refresh, an outbox sync attempt) reports its result here.
+ * We never make a request just to find out the status — that's the
+ * difference from a classic heartbeat. At thousands of clients, under
+ * normal (online) conditions the cost is zero: we're recycling
+ * traffic that already exists.
  */
 export function reportNetworkResult(success: boolean): void {
   setOnline(success);
@@ -74,15 +74,15 @@ function broadcastConnectivity(): void {
   notifyStateChanged({ type: "connectivity-changed", isOnline, isSyncing });
 }
 
-// Semnal fizic — gratuit, event-driven, nu polling. Insuficient singur
-// (wifi conectat ≠ server accesibil), dar prinde instant "s-a scos
-// cablul / s-a oprit wifi-ul".
+// Physical signal — free, event-driven, not polling. Not sufficient
+// on its own (wifi connected ≠ server reachable), but catches "cable
+// unplugged / wifi turned off" instantly.
 window.addEventListener("online", () => setOnline(true));
 window.addEventListener("offline", () => setOnline(false));
 
-// Tab-urile non-lider nu fac request-uri reale către server (doar
-// liderul rulează syncEngine), deci află starea prin broadcast, nu
-// direct din propriul trafic.
+// Non-leader tabs don't make real requests to the server (only the
+// leader runs syncEngine), so they learn the status via broadcast
+// instead of from their own traffic.
 onStateChanged((message) => {
   if (message.type === "connectivity-changed") {
     isOnline = message.isOnline;
@@ -91,8 +91,8 @@ onStateChanged((message) => {
   }
 });
 
-// --- probă de recuperare: rulează DOAR cât timp crezi că ești offline,
-// și DOAR în tab-ul lider ---
+// --- recovery probe: runs ONLY while we think we're offline, and
+// ONLY in the leader tab ---
 let probeAttempt = 0;
 let probeTimeout: ReturnType<typeof setTimeout> | undefined;
 
@@ -111,8 +111,9 @@ function stopRecoveryProbe(): void {
 
 function scheduleProbe(): void {
   const backoff = Math.min(PROBE_MAX_MS, PROBE_BASE_MS * 2 ** probeAttempt);
-  // Jitter ca să nu sondeze mii de clienți exact în aceeași secundă
-  // după o pană de rețea generalizată (thundering herd la recuperare).
+  // Jitter so thousands of clients don't probe in the exact same
+  // second after a widespread network outage (thundering herd on
+  // recovery).
   const jitter = Math.random() * 0.3 * backoff;
   probeTimeout = setTimeout(async () => {
     try {

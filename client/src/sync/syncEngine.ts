@@ -1,9 +1,9 @@
 import { getPendingOutbox, markSynced, scheduleRetry } from "../db/outboxRepo";
 import { notifyStateChanged } from "./broadcastChannel";
 import { reportNetworkResult, setIsLeaderTab, setSyncing } from "./connectivity";
+import { API_BASE } from "../config";
 import type { OutboxRecord } from "../db/schema";
 
-const API_BASE = "http://localhost:3000";
 const SYNC_LOCK_NAME = "pos-sync-leader";
 
 /**
@@ -106,8 +106,8 @@ export function startSyncEngine(intervalMs = 3000): () => void {
         }
         setIsLeaderTab(false);
       });
-      // callback-ul a returnat (adică am ieșit din while pentru că am
-      // fost cancelled) => bucla exterioară se oprește și ea.
+      // The callback returned (i.e. we exited the while loop because
+      // we were cancelled) => the outer loop stops too.
     }
   })();
 

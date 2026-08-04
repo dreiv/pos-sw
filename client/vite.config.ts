@@ -9,11 +9,11 @@ export default defineConfig({
     vue(),
     VitePWA({
       registerType: "prompt",
-      // injectManifest, nu generateSW: vrem control explicit peste
-      // rutare/strategii Workbox (vezi src/sw/sw.ts) — de exemplu
-      // regula NetworkOnly care ține Workbox departe de /products și
-      // /transactions — în loc să acceptăm ce deduce generateSW
-      // automat.
+      // injectManifest, not generateSW: we want explicit control over
+      // Workbox routing/strategies (see src/sw/sw.ts) — e.g. the
+      // NetworkOnly rule that keeps Workbox away from /products and
+      // /transactions — instead of accepting whatever generateSW
+      // infers automatically.
       strategies: "injectManifest",
       srcDir: "src/sw",
       filename: "sw.ts",
@@ -21,8 +21,8 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,svg,png,ico}"],
       },
       devOptions: {
-        // Rulează SW-ul și în `vite dev`, nu doar la build — altfel nu
-        // poți testa offline-first-ul decât după un build de producție.
+        // Run the SW in `vite dev` too, not just on build — otherwise
+        // offline-first can only be tested after a production build.
         enabled: true,
         type: "module",
       },
