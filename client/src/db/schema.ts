@@ -3,7 +3,7 @@ import type { DBSchema } from "idb";
 export const DB_NAME = "pos-db";
 // Bump this whenever the store shape changes — idb's upgrade callback
 // runs migrations keyed off this number.
-export const DB_VERSION = 2;
+export const DB_VERSION = 3;
 
 export interface ProductRecord {
   id: string;
@@ -28,6 +28,25 @@ export interface CartItemRecord {
   quantity: number;
 }
 
+export type OutboxStatus = "pending" | "synced";
+
+/**
+ * A checkout attempt, written BEFORE we try to send it anywhere.
+ *
+ * id is the client-generated idempotency key — same value on every
+ * retry, so the server can dedupe a request it already processed
+ * (e.g. it succeeded server-side but the response never reached us).
+ */
+export interface OutboxRecord {
+  id: string;
+  items: CartItemRecord[];
+  total: number;
+  status: OutboxStatus;
+  createdAt: number;
+  attempts: number;
+  nextRetryAt: number; // epoch ms; sync engine skips items before this
+}
+
 export interface PosDBSchema extends DBSchema {
   products: {
     key: string; // product id
@@ -38,5 +57,9 @@ export interface PosDBSchema extends DBSchema {
     key: string; // productId
     value: CartItemRecord;
   };
-  // outbox store lands here in the sync-engine step.
+  outbox: {
+    key: string; // outbox record id (same as idempotency key)
+    value: OutboxRecord;
+    indexes: { "by-status": string };
+  };
 }
