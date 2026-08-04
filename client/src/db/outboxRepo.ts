@@ -12,15 +12,13 @@ export async function getPendingOutbox(): Promise<OutboxRecord[]> {
 }
 
 /**
- * Write a checkout attempt to the outbox. This is called BEFORE any
- * network request — the whole point of the outbox pattern is that the
- * transaction is durable the moment the customer confirms, regardless
- * of whether we're online right now.
+ * Write a checkout attempt to the outbox — called BEFORE any network
+ * request so the transaction is durable the moment the customer confirms.
  */
 export async function enqueueCheckout(
   id: string,
   items: CartItemRecord[],
-  total: number
+  total: number,
 ): Promise<OutboxRecord> {
   const db = await getDb();
   const record: OutboxRecord = {
@@ -30,7 +28,7 @@ export async function enqueueCheckout(
     status: "pending",
     createdAt: Date.now(),
     attempts: 0,
-    nextRetryAt: Date.now(), // eligible immediately
+    nextRetryAt: Date.now(),
   };
   await db.put("outbox", record);
   return record;
@@ -44,9 +42,9 @@ export async function markSynced(id: string): Promise<void> {
 }
 
 /**
- * Record a failed send attempt and schedule the next retry with
- * exponential backoff, capped so we don't end up waiting minutes
- * between tries in a short demo/interview session.
+ * Record a failed send attempt and schedule the next retry using
+ * exponential backoff, capped at 30 seconds to maintain responsive
+ * retry cycles for active clients.
  */
 export async function scheduleRetry(id: string): Promise<void> {
   const db = await getDb();

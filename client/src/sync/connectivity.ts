@@ -8,9 +8,6 @@ const PROBE_MAX_MS = 30_000;
 
 let isOnline = navigator.onLine;
 let isSyncing = false;
-// Set by syncEngine when the tab wins (or loses) the leadership lock.
-// Only the leader runs the recovery probe, and only the leader
-// broadcasts state to the other tabs — non-leaders just listen.
 let isLeaderTab = false;
 
 type Listener = (status: ConnectivityStatus) => void;
@@ -74,15 +71,9 @@ function broadcastConnectivity(): void {
   notifyStateChanged({ type: "connectivity-changed", isOnline, isSyncing });
 }
 
-// Physical signal — free, event-driven, not polling. Not sufficient
-// on its own (wifi connected ≠ server reachable), but catches "cable
-// unplugged / wifi turned off" instantly.
 window.addEventListener("online", () => setOnline(true));
 window.addEventListener("offline", () => setOnline(false));
 
-// Non-leader tabs don't make real requests to the server (only the
-// leader runs syncEngine), so they learn the status via broadcast
-// instead of from their own traffic.
 onStateChanged((message) => {
   if (message.type === "connectivity-changed") {
     isOnline = message.isOnline;

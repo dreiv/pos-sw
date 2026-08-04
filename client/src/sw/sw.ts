@@ -17,8 +17,6 @@ import { ExpirationPlugin } from "workbox-expiration";
  */
 precacheAndRoute(self.__WB_MANIFEST);
 
-// Clear out caches from older SW versions on every activation, so old
-// build hashes don't accumulate forever.
 cleanupOutdatedCaches();
 
 /**
@@ -73,14 +71,8 @@ registerRoute(
   new NetworkOnly(),
 );
 
-// registerType: "prompt" (see vite.config.ts) means we show the user
-// an "update available" prompt instead of silently activating a new
-// SW version mid-session (which could serve a new app shell while the
-// old JS, already loaded in memory, is still running against it).
-// This listener is the mechanism through which the UI's "update"
-// button (see App.vue) actually applies the update: SKIP_WAITING
-// moves the new SW from "waiting" to "active" only after the user has
-// explicitly agreed.
+// SKIP_WAITING moves the new SW from "waiting" to "active" only after
+// the user explicitly agrees (triggered by App.vue's update button).
 self.addEventListener("message", (event) => {
   if (event.data?.type === "SKIP_WAITING") {
     self.skipWaiting();

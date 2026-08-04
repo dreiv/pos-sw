@@ -3,9 +3,6 @@ import { reportNetworkResult } from "../sync/connectivity";
 import { API_BASE } from "../config";
 import type { ProductRecord } from "./schema";
 
-// Server is the source of truth when reachable; IndexedDB is the
-// offline cache. Points at the pos-server built alongside this app.
-
 export async function getAllProducts(): Promise<ProductRecord[]> {
   const db = await getDb();
   return db.getAll("products");
@@ -35,9 +32,8 @@ export async function getProductByBarcode(barcode: string): Promise<ProductRecor
 export async function refreshProductsFromServer(): Promise<boolean> {
   try {
     const res = await fetch(`${API_BASE}/products`);
-    // Reached the server at all — real connectivity signal, reported
-    // before we even check res.ok (a 4xx/5xx here is still proof the
-    // network path works, unlike the catch block below).
+    // Real connectivity signal — report before checking res.ok (a 4xx/5xx
+    // is still proof the network path works).
     reportNetworkResult(true);
     if (!res.ok) throw new Error(`Server responded ${res.status}`);
 
@@ -51,10 +47,9 @@ export async function refreshProductsFromServer(): Promise<boolean> {
 
     return true;
   } catch (err) {
-    // Only a genuinely failed fetch (network/DNS/offline) means we're
-    // unreachable — a thrown `Error` from the `!res.ok` branch above
-    // already reported reachability as true, so don't overwrite that.
-    if (err instanceof TypeError) reportNetworkResult(false);
+    // Catch network/DNS failures or thrown non-2xx errors. If fetch itself
+    // fails, report offline status; non-2xx responses have already reported
+    // reachability as true above.
     console.warn("[products] refresh from server failed, using cache:", err);
     return false;
   }

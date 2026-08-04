@@ -5,9 +5,6 @@ export type PosBroadcastMessage =
 
 const CHANNEL_NAME = "pos-state";
 
-// Created lazily — BroadcastChannel can be missing in some test/SSR
-// environments, and this file is imported by both the stores and the
-// sync engine.
 let channel: BroadcastChannel | undefined;
 
 function getChannel(): BroadcastChannel {

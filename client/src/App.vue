@@ -4,17 +4,9 @@ import { useOutboxStore } from "@/stores/outbox";
 import { useConnectivityStore } from "@/stores/connectivity";
 import { useRegisterSW } from "virtual:pwa-register/vue";
 
-// Started here, not in CheckoutView, so any outbox items left over from
-// a previous session (e.g. the tab was closed mid-sync) keep retrying
-// as soon as the app loads — not only once the user revisits checkout.
 const outboxStore = useOutboxStore();
 const connectivityStore = useConnectivityStore();
 
-// registerType: "prompt" (see vite.config.ts) means a new SW version
-// sits in "waiting" instead of taking control automatically — we
-// decide exactly when it activates, by calling updateServiceWorker()
-// below, so we don't swap the app shell out from under an
-// in-progress transaction.
 const { needRefresh, updateServiceWorker } = useRegisterSW();
 
 onMounted(() => {

@@ -20,10 +20,6 @@ export const useCartStore = defineStore("cart", {
       this.items = await getCart();
       this.loading = false;
 
-      // Subscribe once per store instance — initialize() runs on every
-      // view mount (ScanView, CartView, CheckoutView all call it), but
-      // we only want one listener re-reading on broadcast, not one per
-      // view visited.
       if (!this.unsubscribeBroadcast) {
         this.unsubscribeBroadcast = onStateChanged((message) => {
           if (message.type === "cart-changed") {

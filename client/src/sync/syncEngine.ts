@@ -23,26 +23,18 @@ async function trySend(record: OutboxRecord): Promise<void> {
       }),
     });
 
-    // We got a response from the server at all — that's a real network
-    // connectivity signal, independent of whether the request itself
-    // succeeded (our simulated 503 is a business-logic failure, not a
-    // network failure). Report it here so we never need a separate
-    // heartbeat just to know we're reachable.
+    // Real network signal — report regardless of response status.
     reportNetworkResult(true);
 
-    // 2xx (including the idempotent-replay 200) means the server has
-    // this transaction durably recorded — safe to mark synced.
     if (res.ok) {
       await markSynced(record.id);
       return;
     }
 
-    // Anything else (including our simulated 503) is treated the same
-    // as a network failure: back off and retry later.
+    // Non-2xx: back off and retry.
     await scheduleRetry(record.id);
   } catch {
-    // fetch() itself threw — offline, DNS failure, server down, etc.
-    // Same handling: this is exactly the case the outbox exists for.
+    // fetch threw — offline/DNS/server down. Exactly what the outbox is for.
     reportNetworkResult(false);
     await scheduleRetry(record.id);
   }
@@ -50,9 +42,8 @@ async function trySend(record: OutboxRecord): Promise<void> {
 
 /**
  * One pass over the outbox: send every pending item whose backoff
- * window has elapsed. Sequential on purpose — this is a practice
- * project with a handful of items, not a high-throughput queue, and
- * sequential sends are much easier to reason about (and to explain).
+ * window has elapsed. Sequential processing ensures strictly ordered
+ * delivery and simplifies transaction state management.
  */
 export async function runSyncCycle(): Promise<void> {
   const pending = await getPendingOutbox();
@@ -65,9 +56,8 @@ export async function runSyncCycle(): Promise<void> {
   }
   setSyncing(false);
 
-  // Statuses changed (synced, or a new backoff window) — tell other
-  // tabs to re-read the outbox from IndexedDB rather than pushing the
-  // records themselves; see broadcastChannel.ts for why.
+  // Notify other tabs to re-read outbox records from IndexedDB after
+  // status updates or backoff rescheduling.
   notifyStateChanged({ type: "outbox-changed" });
 }
 
@@ -76,22 +66,11 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Start the background sync loop, with leader election via Navigator
- * Locks.
+ * Start the background sync loop with leader election via Navigator Locks.
  *
- * navigator.locks.request(name, callback) queues every caller for the
- * named lock FIFO, and holds the lock for the entire lifetime of the
- * async callback. So instead of "elect a leader, then have every tab
- * check 'am I the leader?' before syncing", gating comes almost for
- * free: the inner while-loop only ever runs in the tab that currently
- * holds the lock. A non-leader tab's call to startSyncEngine() just
- * sits queued on that request — it never calls runSyncCycle at all —
- * until the current leader's tab closes (the browser releases the
- * lock automatically) or its own cancel() is called.
- *
- * This function is safe to call from every tab identically; there's no
- * separate "am I leader" branch anywhere in the app — the lock itself
- * is the branch.
+ * Gating runs via Web Locks: only the tab holding the lock executes
+ * runSyncCycle(). On lock acquisition, the tab marks itself as the leader
+ * to coordinate secondary tasks (such as background network probes).
  */
 export function startSyncEngine(intervalMs = 3000): () => void {
   let cancelled = false;

@@ -1,8 +1,6 @@
 import type { DBSchema } from "idb";
 
 export const DB_NAME = "pos-db";
-// Bump this whenever the store shape changes — idb's upgrade callback
-// runs migrations keyed off this number.
 export const DB_VERSION = 1;
 
 export interface ProductRecord {
@@ -22,7 +20,7 @@ export interface ProductRecord {
  * that as a notice instead of silently charging the new price.
  */
 export interface CartItemRecord {
-  productId: string; // also the key — one line per product
+  productId: string;
   name: string;
   priceAtAdd: number;
   quantity: number;
@@ -44,21 +42,21 @@ export interface OutboxRecord {
   status: OutboxStatus;
   createdAt: number;
   attempts: number;
-  nextRetryAt: number; // epoch ms; sync engine skips items before this
+  nextRetryAt: number;
 }
 
 export interface PosDBSchema extends DBSchema {
   products: {
-    key: string; // product id
+    key: string;
     value: ProductRecord;
     indexes: { "by-barcode": string };
   };
   cart: {
-    key: string; // productId
+    key: string;
     value: CartItemRecord;
   };
   outbox: {
-    key: string; // outbox record id (same as idempotency key)
+    key: string;
     value: OutboxRecord;
     indexes: { "by-status": string };
   };

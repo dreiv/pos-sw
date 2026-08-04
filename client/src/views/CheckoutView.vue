@@ -17,10 +17,6 @@ onMounted(() => {
   outboxStore.initialize();
 });
 
-// Price-conflict check: compare what the cart snapshotted at add-time
-// against the product's current price. We don't silently recompute
-// the total to match — we surface it, per the spec's "clear, non-scary
-// notice" requirement, and let the customer see exactly what changed.
 const priceConflicts = computed(() => {
   return cartStore.items
     .map((item) => {

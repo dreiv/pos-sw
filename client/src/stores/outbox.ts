@@ -14,8 +14,6 @@ export const useOutboxStore = defineStore("outbox", {
     async initialize() {
       this.items = await getAllOutbox();
 
-      // Every tab calls startSyncEngine — that's fine now, because
-      // leadership is gated by Navigator Locks inside it, not by us.
       if (!this.stopEngine) {
         this.stopEngine = startSyncEngine();
       }
@@ -32,20 +30,14 @@ export const useOutboxStore = defineStore("outbox", {
     },
     async checkout(cartItems: CartItemRecord[], total: number): Promise<string> {
       const id = crypto.randomUUID();
-      // Written to IndexedDB before any network call — the customer's
-      // transaction is durable the instant they confirm, online or not.
+      // Durable before any network call.
       await enqueueCheckout(id, cartItems, total);
       this.items = await getAllOutbox();
       notifyStateChanged({ type: "outbox-changed" });
 
-      // Try immediately so a checkout while online doesn't just sit
-      // there until the next interval tick. This bypasses the
-      // leadership lock on purpose — safe because trySend is
-      // idempotent, so even if the leader tab's own loop also picks
-      // this record up on its next tick, the server just replays the
-      // same recorded result instead of double-charging.
+      // BroadcastChannel excludes the sending tab; re-fetch locally to reflect
+      // status updates (e.g. pending -> synced) immediately.
       await runSyncCycle();
-      this.items = await getAllOutbox();
       return id;
     },
   },
