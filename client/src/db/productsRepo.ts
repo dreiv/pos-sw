@@ -18,22 +18,14 @@ export async function getProductByBarcode(barcode: string): Promise<ProductRecor
   return db.getFromIndex("products", "by-barcode", barcode);
 }
 
-/**
- * Refresh the local product catalog from the server.
- *
- * Network-first, cache-fallback: if the fetch fails (offline, server
- * down), we just keep whatever's already in IndexedDB — the catalog
- * from the last successful sync. We never throw here, because a failed
- * refresh should never block the app from working offline with
- * whatever it already has cached.
- *
- * Returns true if the refresh succeeded, false if it fell back to cache.
- */
+// Network-first, cache-fallback: keep whatever's in IndexedDB if the
+// fetch fails, so the app still works offline with the last-synced
+// catalog. Returns true if the refresh succeeded, false if it fell
+// back to cache.
 export async function refreshProductsFromServer(): Promise<boolean> {
   try {
     const res = await fetch(`${API_BASE}/products`);
-    // Real connectivity signal — report before checking res.ok (a 4xx/5xx
-    // is still proof the network path works).
+    // Any HTTP status still proves the network path works.
     reportNetworkResult(true);
     if (!res.ok) throw new Error(`Server responded ${res.status}`);
 
@@ -47,9 +39,6 @@ export async function refreshProductsFromServer(): Promise<boolean> {
 
     return true;
   } catch (err) {
-    // Catch network/DNS failures or thrown non-2xx errors. If fetch itself
-    // fails, report offline status; non-2xx responses have already reported
-    // reachability as true above.
     console.warn("[products] refresh from server failed, using cache:", err);
     return false;
   }

@@ -1,18 +1,23 @@
 import { defineStore } from "pinia";
-import { getStatus, subscribeConnectivity, type ConnectivityStatus } from "../sync/connectivity";
+import { isOnline, probeOnce } from "../sync/connectivity";
+import { useOutboxStore } from "./outbox";
 
+export type ConnectivityStatus = "online" | "offline" | "syncing";
+
+// "Syncing" is derived (online + pending outbox items) instead of a
+// separate flag some other module has to remember to flip on/off.
 export const useConnectivityStore = defineStore("connectivity", {
-  state: () => ({
-    status: "online" as ConnectivityStatus,
-    unsubscribe: null as (() => void) | null,
-  }),
+  getters: {
+    status(): ConnectivityStatus {
+      if (!isOnline.value) return "offline";
+      const outboxStore = useOutboxStore();
+      const hasPending = outboxStore.items.some((item) => item.status === "pending");
+      return hasPending ? "syncing" : "online";
+    },
+  },
   actions: {
     initialize() {
-      if (this.unsubscribe) return;
-      this.status = getStatus();
-      this.unsubscribe = subscribeConnectivity((s) => {
-        this.status = s;
-      });
+      probeOnce();
     },
   },
 });

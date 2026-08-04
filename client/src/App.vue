@@ -1,10 +1,26 @@
 <script setup lang="ts">
+import { watch } from "vue";
+import { useRoute } from "vue-router";
 import { useConnectivityStore } from "@/stores/connectivity";
+import { useProductsStore } from "@/stores/products";
 import { useRegisterSW } from "virtual:pwa-register/vue";
 
 const connectivityStore = useConnectivityStore();
+const productsStore = useProductsStore();
+const route = useRoute();
 
 const { needRefresh, updateServiceWorker } = useRegisterSW();
+const PRODUCT_SENSITIVE_ROUTES = new Set(["scan", "cart"]);
+
+watch(
+  () => route.name,
+  async (name) => {
+    if (typeof name === "string" && PRODUCT_SENSITIVE_ROUTES.has(name) && productsStore.isDirty) {
+      await productsStore.refresh();
+    }
+  },
+  { immediate: true },
+);
 </script>
 
 <template>

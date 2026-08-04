@@ -1,121 +1,29 @@
 import { useNetwork } from "@vueuse/core";
-import { watch } from "vue";
-import { notifyStateChanged, onStateChanged } from "./broadcastChannel";
+import { ref, watch } from "vue";
 import { HEALTH_URL } from "../config";
 
-export type ConnectivityStatus = "online" | "offline" | "syncing";
+// Reactive "do we actually have a working network path" signal.
+// Retries are the Service Worker's Background Sync queue's job now,
+// so there's no leader-election/recovery-probe loop here anymore —
+// just navigator.onLine / online-offline events, upgraded by any real
+// API call via reportNetworkResult (a 4xx/5xx still proves the
+// network path works — see productsRepo.ts).
+export const isOnline = ref(navigator.onLine);
 
-const PROBE_BASE_MS = 5_000;
-const PROBE_MAX_MS = 30_000;
-
-let isOnline = navigator.onLine;
-let isSyncing = false;
-let isLeaderTab = false;
-
-type Listener = (status: ConnectivityStatus) => void;
-const listeners = new Set<Listener>();
-
-function computeStatus(): ConnectivityStatus {
-  if (isSyncing) return "syncing";
-  return isOnline ? "online" : "offline";
-}
-
-function emit(): void {
-  const status = computeStatus();
-  for (const l of listeners) l(status);
-}
-
-export function getStatus(): ConnectivityStatus {
-  return computeStatus();
-}
-
-export function subscribeConnectivity(listener: Listener): () => void {
-  listeners.add(listener);
-  listener(computeStatus());
-  return () => listeners.delete(listener);
-}
-
-export function setIsLeaderTab(value: boolean): void {
-  isLeaderTab = value;
-  if (value && !isOnline) startRecoveryProbe();
-  if (!value) stopRecoveryProbe();
-}
-
-export function setSyncing(value: boolean): void {
-  if (isSyncing === value) return;
-  isSyncing = value;
-  emit();
-  if (isLeaderTab) broadcastConnectivity();
-}
-
-/**
- * Passive connectivity signal: any real request to the server
- * (product refresh, an outbox sync attempt) reports its result here.
- * We never make a request just to find out the status — that's the
- * difference from a classic heartbeat. At thousands of clients, under
- * normal (online) conditions the cost is zero: we're recycling
- * traffic that already exists.
- */
 export function reportNetworkResult(success: boolean): void {
-  setOnline(success);
-}
-
-function setOnline(value: boolean): void {
-  if (isOnline === value) return;
-  isOnline = value;
-  emit();
-  if (isLeaderTab) broadcastConnectivity();
-  if (!isOnline) startRecoveryProbe();
-  else stopRecoveryProbe();
-}
-
-function broadcastConnectivity(): void {
-  notifyStateChanged({ type: "connectivity-changed", isOnline, isSyncing });
+  isOnline.value = success;
 }
 
 const { isOnline: browserIsOnline } = useNetwork();
-watch(browserIsOnline, (value) => setOnline(!!value));
-
-onStateChanged((message) => {
-  if (message.type === "connectivity-changed") {
-    isOnline = message.isOnline;
-    isSyncing = message.isSyncing;
-    emit();
-  }
+watch(browserIsOnline, (value) => {
+  isOnline.value = !!value;
 });
 
-// --- recovery probe: runs ONLY while we think we're offline, and
-// ONLY in the leader tab ---
-let probeAttempt = 0;
-let probeTimeout: ReturnType<typeof setTimeout> | undefined;
-
-function startRecoveryProbe(): void {
-  if (probeTimeout || !isLeaderTab) return;
-  scheduleProbe();
-}
-
-function stopRecoveryProbe(): void {
-  probeAttempt = 0;
-  if (probeTimeout) {
-    clearTimeout(probeTimeout);
-    probeTimeout = undefined;
-  }
-}
-
-function scheduleProbe(): void {
-  const backoff = Math.min(PROBE_MAX_MS, PROBE_BASE_MS * 2 ** probeAttempt);
-  // Jitter so thousands of clients don't probe in the exact same
-  // second after a widespread network outage (thundering herd on
-  // recovery).
-  const jitter = Math.random() * 0.3 * backoff;
-  probeTimeout = setTimeout(async () => {
-    try {
-      const res = await fetch(HEALTH_URL);
-      reportNetworkResult(res.ok);
-    } catch {
-      reportNetworkResult(false);
-    }
-    probeAttempt++;
-    if (!isOnline) scheduleProbe();
-  }, backoff + jitter);
+// navigator.onLine only reflects "is a network interface up," not
+// "can we reach the server." One request at startup gets an accurate
+// initial reading; passive signals are enough after that.
+export function probeOnce(): void {
+  fetch(HEALTH_URL)
+    .then((res) => reportNetworkResult(res.ok))
+    .catch(() => reportNetworkResult(false));
 }

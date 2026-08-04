@@ -11,14 +11,8 @@ export interface ProductRecord {
   stock: number;
 }
 
-/**
- * A line in the in-progress cart.
- *
- * priceAtAdd is a deliberate snapshot, not a live lookup: at checkout
- * we compare it against the product's current price to detect a
- * server-side price change while the item sat in the cart, and surface
- * that as a notice instead of silently charging the new price.
- */
+// priceAtAdd is a snapshot, not a live lookup — checkout compares it
+// against the current catalog price to detect server-side price drift.
 export interface CartItemRecord {
   productId: string;
   name: string;
@@ -28,21 +22,16 @@ export interface CartItemRecord {
 
 export type OutboxStatus = "pending" | "synced";
 
-/**
- * A checkout attempt, written BEFORE we try to send it anywhere.
- *
- * id is the client-generated idempotency key — same value on every
- * retry, so the server can dedupe a request it already processed
- * (e.g. it succeeded server-side but the response never reached us).
- */
+// A checkout attempt, written BEFORE any network request so it's
+// durable the moment the customer confirms. `id` is the client-
+// generated idempotency key the server dedupes on. No retry counters
+// here — that's the Service Worker's Background Sync queue's job now.
 export interface OutboxRecord {
   id: string;
   items: CartItemRecord[];
   total: number;
   status: OutboxStatus;
   createdAt: number;
-  attempts: number;
-  nextRetryAt: number;
 }
 
 export interface PosDBSchema extends DBSchema {
@@ -58,6 +47,5 @@ export interface PosDBSchema extends DBSchema {
   outbox: {
     key: string;
     value: OutboxRecord;
-    indexes: { "by-status": string };
   };
 }

@@ -12,8 +12,9 @@ export function getDb(): Promise<IDBPDatabase<PosDBSchema>> {
 
         db.createObjectStore("cart", { keyPath: "productId" });
 
-        const outbox = db.createObjectStore("outbox", { keyPath: "id" });
-        outbox.createIndex("by-status", "status", { unique: false });
+        // No "by-status" index — retry scheduling moved to the
+        // Service Worker's Background Sync queue.
+        db.createObjectStore("outbox", { keyPath: "id" });
       },
       blocking() {
         dbPromise?.then((db) => db.close());
