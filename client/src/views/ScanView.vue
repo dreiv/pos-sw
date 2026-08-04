@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
 import { useProductsStore } from "@/stores/products";
+import { useCartStore } from "@/stores/cart";
 
 const productsStore = useProductsStore();
+const cartStore = useCartStore();
 
 onMounted(() => {
   productsStore.initialize();
+  cartStore.initialize();
 });
 </script>
 
@@ -19,7 +22,9 @@ onMounted(() => {
     <ul>
       <li v-for="p in productsStore.products" :key="p.id">
         {{ p.name }} — {{ p.price.toFixed(2) }} lei ({{ p.stock }} în stoc)
+        <button type="button" @click="cartStore.add(p)">Adaugă în coș</button>
       </li>
     </ul>
+    <RouterLink to="/cart">Vezi coșul ({{ cartStore.itemCount }})</RouterLink>
   </main>
 </template>

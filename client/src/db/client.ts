@@ -13,7 +13,10 @@ export function getDb(): Promise<IDBPDatabase<PosDBSchema>> {
           const store = db.createObjectStore("products", { keyPath: "id" });
           store.createIndex("by-barcode", "barcode", { unique: false });
         }
-        // Future migrations: `if (oldVersion < 2) { ... }` — additive,
+        if (oldVersion < 2) {
+          db.createObjectStore("cart", { keyPath: "productId" });
+        }
+        // Future migrations: `if (oldVersion < 3) { ... }` — additive,
         // never destructive, so users mid-transaction don't lose data.
       },
     });
