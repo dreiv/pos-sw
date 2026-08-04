@@ -24,20 +24,35 @@ const router = createRouter({
 });
 
 let storesInitialized = false;
+const PRODUCT_SENSITIVE_ROUTES = new Set(["scan", "cart"]);
 
 // Run initial store hydrations (IndexedDB loads, network listener bindings)
 // once on app bootstrap rather than re-triggering on every route transition.
-router.beforeEach(async () => {
-  if (storesInitialized) return true;
-  storesInitialized = true;
+router.beforeEach(async (to) => {
+  if (!storesInitialized) {
+    storesInitialized = true;
 
-  const cartStore = useCartStore();
-  const productsStore = useProductsStore();
-  const outboxStore = useOutboxStore();
-  const connectivityStore = useConnectivityStore();
+    const cartStore = useCartStore();
+    const productsStore = useProductsStore();
+    const outboxStore = useOutboxStore();
+    const connectivityStore = useConnectivityStore();
 
-  await Promise.all([cartStore.initialize(), productsStore.initialize(), outboxStore.initialize()]);
-  connectivityStore.initialize();
+    await Promise.all([
+      cartStore.initialize(),
+      productsStore.initialize(),
+      outboxStore.initialize(),
+    ]);
+    connectivityStore.initialize();
+
+    return true;
+  }
+
+  if (typeof to.name === "string" && PRODUCT_SENSITIVE_ROUTES.has(to.name)) {
+    const productsStore = useProductsStore();
+    if (productsStore.isDirty) {
+      await productsStore.refresh();
+    }
+  }
 
   return true;
 });

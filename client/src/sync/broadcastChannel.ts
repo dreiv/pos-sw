@@ -4,7 +4,8 @@ import { watch } from "vue";
 export type PosBroadcastMessage =
   | { type: "cart-changed" }
   | { type: "outbox-changed" }
-  | { type: "connectivity-changed"; isOnline: boolean; isSyncing: boolean };
+  | { type: "connectivity-changed"; isOnline: boolean; isSyncing: boolean }
+  | { type: "products-changed" };
 
 const CHANNEL_NAME = "pos-state";
 

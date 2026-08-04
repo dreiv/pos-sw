@@ -2,6 +2,7 @@
 import { ref, onMounted, reactive } from "vue";
 import { API_BASE } from "@/config";
 import { formatPrice } from "@/utils/format";
+import { notifyStateChanged } from "@/sync/broadcastChannel";
 import type { ProductRecord } from "@/db/schema";
 
 const products = ref<ProductRecord[]>([]);
@@ -59,6 +60,7 @@ async function saveEdit(id: string) {
     const idx = products.value.findIndex((p) => p.id === id);
     if (idx !== -1) products.value[idx] = updated;
     editingId.value = null;
+    notifyStateChanged({ type: "products-changed" });
   } catch (err) {
     error.value = "Nu am putut salva modificările.";
     console.error("[admin] failed to update product:", err);
@@ -66,12 +68,13 @@ async function saveEdit(id: string) {
 }
 
 async function deleteProduct(p: ProductRecord) {
-  if (!confirm(`Ștergi definitiv „${p.name}”?`)) return;
+  if (!confirm(`Ștergi definitiv „${p.name}"?`)) return;
   error.value = null;
   try {
     const res = await fetch(`${API_BASE}/products/${p.id}`, { method: "DELETE" });
     if (!res.ok && res.status !== 204) throw new Error(`Server responded ${res.status}`);
     products.value = products.value.filter((x) => x.id !== p.id);
+    notifyStateChanged({ type: "products-changed" });
   } catch (err) {
     error.value = "Nu am putut șterge produsul.";
     console.error("[admin] failed to delete product:", err);
@@ -103,6 +106,7 @@ async function createProduct() {
     newDraft.stock = 0;
     newDraft.barcode = "";
     showNewForm.value = false;
+    notifyStateChanged({ type: "products-changed" });
   } catch (err) {
     error.value = "Nu am putut crea produsul.";
     console.error("[admin] failed to create product:", err);
