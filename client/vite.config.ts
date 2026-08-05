@@ -43,28 +43,8 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        // Vendor code split out of the app chunk for long-term caching.
-        // Note: workbox-* packages live in the separate SW build
-        // (vite-plugin-pwa's injectManifest), not here — vendor-workbox
-        // is for any client-side workbox import (e.g. workbox-window),
-        // should this app add one. Function form so this doesn't break
-        // silently if a dependency's subpath imports change.
         manualChunks(id) {
-          if (!id.includes("node_modules")) return;
-
-          if (/[\\/]node_modules[\\/](vue|vue-router|@vue)[\\/]/.test(id)) {
-            return "vendor-vue";
-          }
-          if (/[\\/]node_modules[\\/]pinia[\\/]/.test(id)) {
-            return "vendor-pinia";
-          }
-          if (/[\\/]node_modules[\\/]workbox-window[\\/]/.test(id)) {
-            return "vendor-workbox";
-          }
-          if (/[\\/]node_modules[\\/](idb|@vueuse)[\\/]/.test(id)) {
-            return "vendor-data";
-          }
-          return "vendor";
+          if (id.includes("node_modules")) return "vendor";
         },
       },
     },
