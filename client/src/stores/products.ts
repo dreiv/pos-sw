@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { getAllProducts, refreshProductsFromServer } from "../db/productsRepo";
 import { onStateChanged } from "../sync/broadcastChannel";
+import { useCartStore } from "./cart";
 import type { ProductRecord } from "../db/schema";
 
 export const useProductsStore = defineStore("products", {
@@ -10,6 +11,16 @@ export const useProductsStore = defineStore("products", {
     lastSyncSucceeded: null as boolean | null,
     isDirty: false,
   }),
+  getters: {
+    availableStock: (state) => {
+      return (productId: string): number => {
+        const product = state.products.find((p) => p.id === productId);
+        if (!product) return 0;
+        const cartStore = useCartStore();
+        return Math.max(0, product.stock - cartStore.quantityInCart(productId));
+      };
+    },
+  },
   actions: {
     async refresh() {
       this.lastSyncSucceeded = await refreshProductsFromServer();
@@ -30,13 +41,6 @@ export const useProductsStore = defineStore("products", {
 
     markDirty() {
       this.isDirty = true;
-    },
-
-    // In-memory only, not persisted to IndexedDB — a display-side
-    adjustLocalStock(productId: string, delta: number) {
-      const product = this.products.find((p) => p.id === productId);
-      if (!product) return;
-      product.stock = Math.max(0, product.stock - delta);
     },
   },
 });

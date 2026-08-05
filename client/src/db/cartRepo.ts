@@ -18,7 +18,9 @@ export async function addToCart(
   quantity = 1
 ): Promise<void> {
   const db = await getDb();
-  const existing = await db.get("cart", product.id);
+  const tx = db.transaction("cart", "readwrite");
+  const store = tx.objectStore("cart");
+  const existing = await store.get(product.id);
   const next: CartItemRecord = existing
     ? { ...existing, quantity: existing.quantity + quantity }
     : {
@@ -27,7 +29,8 @@ export async function addToCart(
         priceAtAdd: product.price,
         quantity,
       };
-  await db.put("cart", next);
+  await store.put(next);
+  await tx.done;
 }
 
 export async function updateCartQuantity(
@@ -35,13 +38,20 @@ export async function updateCartQuantity(
   quantity: number
 ): Promise<void> {
   const db = await getDb();
+  const tx = db.transaction("cart", "readwrite");
+  const store = tx.objectStore("cart");
   if (quantity <= 0) {
-    await db.delete("cart", productId);
+    await store.delete(productId);
+    await tx.done;
     return;
   }
-  const existing = await db.get("cart", productId);
-  if (!existing) return;
-  await db.put("cart", { ...existing, quantity });
+  const existing = await store.get(productId);
+  if (!existing) {
+    await tx.done;
+    return;
+  }
+  await store.put({ ...existing, quantity });
+  await tx.done;
 }
 
 export async function removeFromCart(productId: string): Promise<void> {

@@ -25,6 +25,7 @@ export const useOutboxStore = defineStore("outbox", {
     items: [] as OutboxRecord[],
     unsubscribeBroadcast: null as (() => void) | null,
     swMessageHandler: null as ((event: MessageEvent) => void) | null,
+    onlineHandler: null as (() => void) | null,
   }),
   actions: {
     async initialize() {
@@ -53,6 +54,16 @@ export const useOutboxStore = defineStore("outbox", {
             });
           }
         });
+      }
+
+      if (!this.onlineHandler) {
+        this.onlineHandler = () => {
+          if (navigator.serviceWorker?.controller) {
+            navigator.serviceWorker.controller.postMessage({ type: "FORCE_SYNC" });
+          }
+          void this.reconcilePending();
+        };
+        window.addEventListener("online", this.onlineHandler);
       }
     },
 
@@ -108,6 +119,21 @@ export const useOutboxStore = defineStore("outbox", {
       }
 
       return id;
+    },
+
+    dispose() {
+      if (this.swMessageHandler) {
+        navigator.serviceWorker.removeEventListener("message", this.swMessageHandler);
+        this.swMessageHandler = null;
+      }
+      if (this.onlineHandler) {
+        window.removeEventListener("online", this.onlineHandler);
+        this.onlineHandler = null;
+      }
+      if (this.unsubscribeBroadcast) {
+        this.unsubscribeBroadcast();
+        this.unsubscribeBroadcast = null;
+      }
     },
   },
 });

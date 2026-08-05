@@ -20,6 +20,10 @@ export const useCartStore = defineStore("cart", {
     total: (state): number =>
       state.items.reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0),
     itemCount: (state): number => state.items.reduce((sum, item) => sum + item.quantity, 0),
+    quantityInCart: (state) => {
+      return (productId: string): number =>
+        state.items.find((item) => item.productId === productId)?.quantity ?? 0;
+    },
     // Compares captured item prices (priceAtAdd) against the latest catalog
     // prices in productsStore to surface price drifts before checkout.
     priceConflicts(state): PriceConflict[] {
@@ -53,21 +57,16 @@ export const useCartStore = defineStore("cart", {
       await addToCart(product, quantity);
       this.items = await getCart();
       notifyStateChanged({ type: "cart-changed" });
-      useProductsStore().adjustLocalStock(product.id, quantity);
     },
     async updateQuantity(productId: string, quantity: number) {
-      const previousQuantity = this.items.find((i) => i.productId === productId)?.quantity ?? 0;
       await updateCartQuantity(productId, quantity);
       this.items = await getCart();
       notifyStateChanged({ type: "cart-changed" });
-      useProductsStore().adjustLocalStock(productId, quantity - previousQuantity);
     },
     async remove(productId: string) {
-      const existing = this.items.find((i) => i.productId === productId);
       await removeFromCart(productId);
       this.items = await getCart();
       notifyStateChanged({ type: "cart-changed" });
-      if (existing) useProductsStore().adjustLocalStock(productId, -existing.quantity);
     },
     async clear() {
       await clearCart();

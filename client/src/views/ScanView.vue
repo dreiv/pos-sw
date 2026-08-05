@@ -37,7 +37,12 @@ const filteredProducts = computed(() => {
     </p>
 
     <ul v-else class="product-grid">
-      <li v-for="p in filteredProducts" :key="p.id" class="product-card" :class="{ 'out-of-stock': p.stock === 0 }">
+      <li
+        v-for="p in filteredProducts"
+        :key="p.id"
+        class="product-card"
+        :class="{ 'out-of-stock': productsStore.availableStock(p.id) === 0 }"
+      >
         <div class="product-info">
           <span class="product-name">{{ p.name }}</span>
           <span class="text-muted text-sm">{{ p.barcode }}</span>
@@ -45,13 +50,18 @@ const filteredProducts = computed(() => {
 
         <div class="product-meta">
           <span class="product-price">{{ formatPrice(p.price) }}</span>
-          <span class="badge" :class="{ 'badge--danger': p.stock === 0 }">
-            {{ p.stock === 0 ? "Stoc epuizat" : `${p.stock} în stoc` }}
+          <span class="badge" :class="{ 'badge--danger': productsStore.availableStock(p.id) === 0 }">
+            {{ productsStore.availableStock(p.id) === 0 ? "Stoc epuizat" : `${productsStore.availableStock(p.id)} în stoc` }}
           </span>
         </div>
 
-        <button type="button" class="btn btn--primary" :disabled="p.stock === 0" @click="cartStore.add(p)">
-          {{ p.stock === 0 ? "Indisponibil" : "Adaugă în coș" }}
+        <button
+          type="button"
+          class="btn btn--primary"
+          :disabled="productsStore.availableStock(p.id) === 0"
+          @click="cartStore.add(p)"
+        >
+          {{ productsStore.availableStock(p.id) === 0 ? "Indisponibil" : "Adaugă în coș" }}
         </button>
       </li>
     </ul>
