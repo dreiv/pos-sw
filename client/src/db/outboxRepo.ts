@@ -20,6 +20,7 @@ export async function enqueueCheckout(
     total,
     status: "pending",
     createdAt: Date.now(),
+    attempts: 0,
   };
   await db.put("outbox", record);
   return record;
@@ -30,4 +31,18 @@ export async function markSynced(id: string): Promise<void> {
   const record = await db.get("outbox", id);
   if (!record) return;
   await db.put("outbox", { ...record, status: "synced" });
+}
+
+export async function markFailed(id: string): Promise<void> {
+  const db = await getDb();
+  const record = await db.get("outbox", id);
+  if (!record) return;
+  await db.put("outbox", { ...record, status: "failed", failedAt: Date.now() });
+}
+
+export async function recordAttempt(id: string): Promise<void> {
+  const db = await getDb();
+  const record = await db.get("outbox", id);
+  if (!record) return;
+  await db.put("outbox", { ...record, attempts: (record.attempts ?? 0) + 1 });
 }

@@ -15,6 +15,19 @@ transactionsRouter.post("/", async (req: Request, res: Response) => {
     return;
   }
 
+  const hasNonIntegerMoney =
+    !Number.isInteger(total) ||
+    items.some(
+      (item: { priceAtAdd?: unknown }) =>
+        typeof item.priceAtAdd !== "number" || !Number.isInteger(item.priceAtAdd),
+    );
+  if (hasNonIntegerMoney) {
+    res
+      .status(400)
+      .json({ error: "total and each item's priceAtAdd must be integers (bani, not lei)" });
+    return;
+  }
+
   const existing = await transactionsRepo.findById(id);
   if (existing) {
     res.status(200).json(existing);

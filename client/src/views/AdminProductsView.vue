@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, reactive } from "vue";
 import { API_BASE } from "@/config";
-import { formatPrice } from "@/utils/format";
+import { formatPrice, leiToBani, baniToLei } from "@/utils/format";
 import { notifyStateChanged } from "@/sync/broadcastChannel";
 import type { ProductRecord } from "@/db/schema";
 
@@ -10,10 +10,10 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 
 const editingId = ref<string | null>(null);
-const editDraft = reactive({ name: "", price: 0, stock: 0, barcode: "" });
+const editDraft = reactive({ name: "", priceLei: 0, stock: 0, barcode: "" });
 
 const showNewForm = ref(false);
-const newDraft = reactive({ name: "", price: 0, stock: 0, barcode: "" });
+const newDraft = reactive({ name: "", priceLei: 0, stock: 0, barcode: "" });
 
 async function loadProducts() {
   loading.value = true;
@@ -33,7 +33,7 @@ async function loadProducts() {
 function startEdit(p: ProductRecord) {
   editingId.value = p.id;
   editDraft.name = p.name;
-  editDraft.price = p.price;
+  editDraft.priceLei = baniToLei(p.price);
   editDraft.stock = p.stock;
   editDraft.barcode = p.barcode;
 }
@@ -50,7 +50,7 @@ async function saveEdit(id: string) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: editDraft.name,
-        price: Number(editDraft.price),
+        price: leiToBani(Number(editDraft.priceLei)),
         stock: Number(editDraft.stock),
         barcode: editDraft.barcode,
       }),
@@ -93,7 +93,7 @@ async function createProduct() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: newDraft.name,
-        price: Number(newDraft.price),
+        price: leiToBani(Number(newDraft.priceLei)),
         stock: Number(newDraft.stock),
         barcode: newDraft.barcode,
       }),
@@ -102,7 +102,7 @@ async function createProduct() {
     const created: ProductRecord = await res.json();
     products.value.push(created);
     newDraft.name = "";
-    newDraft.price = 0;
+    newDraft.priceLei = 0;
     newDraft.stock = 0;
     newDraft.barcode = "";
     showNewForm.value = false;
@@ -145,7 +145,7 @@ onMounted(loadProducts);
         <tr v-for="p in products" :key="p.id" :class="{ editing: editingId === p.id }">
           <template v-if="editingId === p.id">
             <td><input class="input" v-model="editDraft.name" type="text" /></td>
-            <td><input class="input" v-model.number="editDraft.price" type="number" step="0.01" min="0" /></td>
+            <td><input class="input" v-model.number="editDraft.priceLei" type="number" step="0.01" min="0" /></td>
             <td><input class="input" v-model.number="editDraft.stock" type="number" min="0" /></td>
             <td><input class="input" v-model="editDraft.barcode" type="text" /></td>
             <td class="actions-col">
@@ -180,7 +180,7 @@ onMounted(loadProducts);
 
       <form v-else class="new-product-form" @submit.prevent="createProduct">
         <input class="input" v-model="newDraft.name" type="text" placeholder="Nume" required />
-        <input class="input" v-model.number="newDraft.price" type="number" step="0.01" min="0" placeholder="Preț" />
+        <input class="input" v-model.number="newDraft.priceLei" type="number" step="0.01" min="0" placeholder="Preț" />
         <input class="input" v-model.number="newDraft.stock" type="number" min="0" placeholder="Stoc" />
         <input class="input" v-model="newDraft.barcode" type="text" placeholder="Cod de bare" />
         <button type="submit" class="btn btn--primary">Salvează</button>

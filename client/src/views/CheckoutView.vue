@@ -68,9 +68,15 @@ async function confirmCheckout() {
       <p v-if="lastCheckoutRecord?.status === 'synced'" class="notice notice--success">
         ✅ Tranzacție confirmată de server (id: {{ lastCheckoutId }}).
       </p>
+      <p v-else-if="lastCheckoutRecord?.status === 'failed'" class="notice notice--danger">
+        ❌ Tranzacția nu a putut fi trimisă automat (id: {{ lastCheckoutId }}). Te rugăm să
+        contactezi un membru al personalului.
+      </p>
       <p v-else class="notice notice--warning">
-        ⏳ Tranzacția e salvată local și în curs de sincronizare (id: {{ lastCheckoutId }}). Va fi
-        retrimisă automat până reușește — nu se pierde, chiar dacă închizi tab-ul.
+        ⏳ Tranzacția e salvată local și se încearcă retrimiterea (id: {{ lastCheckoutId }}). Nu
+        se pierde din memoria locală a acestui dispozitiv, dar retrimiterea automată nu e garantată
+        la nesfârșit — dacă durează prea mult, o să apară aici un mesaj care te va ruga să contactezi
+        personalul.
       </p>
     </div>
 

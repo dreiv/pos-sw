@@ -5,23 +5,23 @@
       {
         "productId": "p002",
         "name": "Paine alba",
-        "priceAtAdd": 4.8,
+        "priceAtAdd": 480,
         "quantity": 2
       },
       {
         "productId": "p003",
         "name": "Oua 10buc",
-        "priceAtAdd": 10.82,
+        "priceAtAdd": 1082,
         "quantity": 1
       },
       {
         "productId": "p004",
         "name": "Unt 200g",
-        "priceAtAdd": 5.04,
+        "priceAtAdd": 504,
         "quantity": 1
       }
     ],
-    "total": 25.46,
+    "total": 2546,
     "receivedAt": "2026-08-04T15:23:53.889Z"
   },
   {
@@ -30,23 +30,23 @@
       {
         "productId": "p001",
         "name": "Lapte 1L",
-        "priceAtAdd": 1.65,
+        "priceAtAdd": 165,
         "quantity": 1
       },
       {
         "productId": "p002",
         "name": "Paine alba",
-        "priceAtAdd": 4.8,
+        "priceAtAdd": 480,
         "quantity": 3
       },
       {
         "productId": "p004",
         "name": "Unt 200g",
-        "priceAtAdd": 5.04,
+        "priceAtAdd": 504,
         "quantity": 1
       }
     ],
-    "total": 21.089999999999996,
+    "total": 2109,
     "receivedAt": "2026-08-04T15:23:58.669Z"
   },
   {
@@ -55,23 +55,36 @@
       {
         "productId": "p002",
         "name": "Paine alba",
-        "priceAtAdd": 4.8,
+        "priceAtAdd": 480,
         "quantity": 1
       },
       {
         "productId": "p003",
         "name": "Oua 10buc",
-        "priceAtAdd": 10.82,
+        "priceAtAdd": 1082,
         "quantity": 1
       },
       {
         "productId": "p004",
         "name": "Unt 200g",
-        "priceAtAdd": 5.04,
+        "priceAtAdd": 504,
         "quantity": 1
       }
     ],
-    "total": 20.66,
+    "total": 2066,
     "receivedAt": "2026-08-04T15:26:25.289Z"
+  },
+  {
+    "id": "ef27d4f2-605e-4b61-93a8-47a392b08eba",
+    "items": [
+      {
+        "productId": "p004",
+        "name": "Unt 200g",
+        "priceAtAdd": 504,
+        "quantity": 3
+      }
+    ],
+    "total": 1512,
+    "receivedAt": "2026-09-13T13:42:07.792Z"
   }
 ]

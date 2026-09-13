@@ -20,18 +20,22 @@ export interface CartItemRecord {
   quantity: number;
 }
 
-export type OutboxStatus = "pending" | "synced";
+export type OutboxStatus = "pending" | "synced" | "failed";
 
 // A checkout attempt, written BEFORE any network request so it's
 // durable the moment the customer confirms. `id` is the client-
-// generated idempotency key the server dedupes on. No retry counters
-// here — that's the Service Worker's Background Sync queue's job now.
+// generated idempotency key the server dedupes on. `attempts` and
+// `failedAt` are populated by the reconciliation loop in
+// stores/outbox.ts (reconcilePending()), not at creation time — a
+// record that's never needed a retry keeps them unset.
 export interface OutboxRecord {
   id: string;
   items: CartItemRecord[];
   total: number;
   status: OutboxStatus;
   createdAt: number;
+  attempts?: number;
+  failedAt?: number;
 }
 
 export interface PosDBSchema extends DBSchema {

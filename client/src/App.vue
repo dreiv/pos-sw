@@ -9,7 +9,18 @@ const connectivityStore = useConnectivityStore();
 const productsStore = useProductsStore();
 const route = useRoute();
 
-const { needRefresh, updateServiceWorker } = useRegisterSW();
+const { needRefresh, updateServiceWorker } = useRegisterSW({
+  onRegisteredSW(_swScriptUrl, registration) {
+    if (!registration) return;
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        registration.update().catch((err) => {
+          console.warn("[sw] update check failed:", err);
+        });
+      }
+    });
+  },
+});
 const PRODUCT_SENSITIVE_ROUTES = new Set(["scan", "cart"]);
 
 watch(

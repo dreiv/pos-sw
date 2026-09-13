@@ -41,8 +41,13 @@ const throwOnBadStatus: WorkboxPlugin = {
 };
 
 // Notifies the page which record synced (so it can flip status in IndexedDB)
-// and preserves delivery order on failure. Shared by the native 'sync' event
-// and the FORCE_SYNC message handler below.
+// and preserves delivery order on failure. Invoked only by the native
+// 'sync' event (onSync below) — this queue is a Chromium-only,
+// best-effort backstop now. The app's own leader-elected
+// reconcilePending() (client/src/stores/outbox.ts) is the retry path
+// that actually reaches every browser, and it doesn't poke this queue
+// directly; the two are intentionally not coordinated any further than
+// "the server's idempotency key makes overlap harmless".
 async function replayOutboxQueue(queue: Queue): Promise<void> {
   let entry = await queue.shiftRequest();
   while (entry) {
@@ -65,9 +70,9 @@ async function replayOutboxQueue(queue: Queue): Promise<void> {
   }
 }
 
-// Built as a standalone Queue (rather than via BackgroundSyncPlugin) so we
-// have a public handle to pass into replayOutboxQueue from FORCE_SYNC too —
-// BackgroundSyncPlugin keeps its Queue private.
+// Built as a standalone Queue (rather than via BackgroundSyncPlugin) so its
+// onSync callback can share replayOutboxQueue's client-notification logic
+// explicitly — BackgroundSyncPlugin keeps its internal Queue private.
 const outboxQueue = new Queue("transactions-outbox-queue", {
   maxRetentionTime: 24 * 60, // give up after 24h
   onSync: async ({ queue }) => {
@@ -88,14 +93,11 @@ registerRoute(
 );
 
 // SKIP_WAITING: applies a waiting update (triggered by App.vue's update button).
-// FORCE_SYNC: sent by the outbox store on 'online', since native Background
-// Sync can lag well behind the connection actually returning.
+// There's no FORCE_SYNC handler anymore — the app no longer actively pokes
+// this queue (see the comment on replayOutboxQueue above); it only replays
+// via its own onSync callback, on the browser's native schedule.
 self.addEventListener("message", (event) => {
   if (event.data?.type === "SKIP_WAITING") {
     self.skipWaiting();
-  }
-
-  if (event.data?.type === "FORCE_SYNC") {
-    event.waitUntil(replayOutboxQueue(outboxQueue));
   }
 });

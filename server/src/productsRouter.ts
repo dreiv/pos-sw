@@ -26,6 +26,10 @@ productsRouter.post("/", async (req: Request, res: Response) => {
     res.status(400).json({ error: "name (string) and price (number) are required" });
     return;
   }
+  if (!Number.isInteger(price)) {
+    res.status(400).json({ error: "price must be an integer (bani, not lei)" });
+    return;
+  }
   const product = await productsRepo.create({
     name,
     price,
@@ -37,6 +41,11 @@ productsRouter.post("/", async (req: Request, res: Response) => {
 
 // PUT /products/:id
 productsRouter.put("/:id", async (req: Request, res: Response) => {
+  const { price } = req.body ?? {};
+  if (price !== undefined && (typeof price !== "number" || !Number.isInteger(price))) {
+    res.status(400).json({ error: "price must be an integer (bani, not lei)" });
+    return;
+  }
   const updated = await productsRepo.update(req.params.id, req.body ?? {});
   if (!updated) {
     res.status(404).json({ error: "Product not found" });
